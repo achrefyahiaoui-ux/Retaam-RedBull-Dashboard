@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>GA Dashboard - SIM & Wallet Management</title>
+
+  <!-- Google Fonts: Cairo (Arabic) and DM Sans (numerics) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for bar charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+  <style>
+    /* ========================================
+       CSS VARIABLES
+       ======================================== */
+    :root {
+      /* Colors - Light Theme */
+      --bg-primary: #C3CBE3;
+      --bg-secondary: #d4dae9;
+      --bg-tertiary: #e1e5f0;
+      --accent-primary: #a855f7;
+      --accent-light: #c084fc;
+      --accent-dark: #9333ea;
+      --accent-muted: rgba(168, 85, 247, 0.1);
+
+      /* Text Colors */
+      --text-primary: #111827;
+      --text-secondary: #4b5563;
+      --text-muted: #9ca3af;
+
+      /* UI Colors */
+      --success: #10b981;
+      --success-muted: rgba(16, 185, 129, 0.1);
+      --warning: #f59e0b;
+      --warning-muted: rgba(245, 158, 11, 0.1);
+      --error: #ef4444;
+      --error-muted: rgba(239, 68, 68, 0.1);
+      --border-color: #e5e7eb;
+      --border-accent: rgba(168, 85, 247, 0.2);
+
+      /* Effects */
+      --shadow-accent: 0 0 40px rgba(168, 85, 247, 0.1);
+      --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+      /* Typography */
+      --font-arabic: 'Cairo', sans-serif;
+      --font-numeric: 'DM Sans', sans-serif;
+
+      /* Border Radius */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+
+      /* Spacing */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+    }
+
+    /* ========================================
+       GLOBAL STYLES
+       ======================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-arabic);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Background gradient effects */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(168, 85, 247, 0.03), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(168, 85, 247, 0.02), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ========================================
+       LOADING OVERLAY
+       ======================================== */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      transition: opacity 0.3s ease;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+      display: none;
+    }
+
+    .loader {
+      width: 60px;
+      height: 60px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ========================================
+       HEADER
+       ======================================== */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(212, 218, 233, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-icon {
+      font-size: 32px;
+      filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.5));
+    }
+
+    .logo-text h1 {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+    }
+
+    .logo-text p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .last-updated,
+    .report-date {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 10px 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .refresh-btn,
+    .pause-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--accent-muted);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-md);
+      color: var(--accent-primary);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: var(--font-arabic);
+    }
+
+    .refresh-btn:hover,
+    .pause-btn:hover {
+      background: var(--accent-primary);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-accent);
+    }
+
+    .pause-btn.paused {
+      background: var(--warning-muted);
+      border-color: var(--warning);
+      color: var(--warning);
+    }
+
+    .pause-btn.paused:hover {
+      background: var(--warning);
+      color: white;
+    }
+
+    .refresh-btn.loading svg {
+      animation: spin 1s linear infinite;
+    }
+
+    /* ========================================
+       MAIN CONTENT
+       ======================================== */
+    main {
+      position: relative;
+      z-index: 1;
+      padding: 40px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    /* ========================================
+       FILTERS ROW
+       ======================================== */
+    .filters-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-end;
+      padding: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-select,
+    .filter-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: var(--font-arabic);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-input {
+      cursor: text;
+    }
+
+    .filter-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .filter-select:focus,
+    .filter-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+
+    .clear-filters-btn {
+      padding: 12px 24px;
+      background: var(--accent-muted);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-md);
+      color: var(--accent-primary);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      font-family: var(--font-arabic);
+    }
+
+    .clear-filters-btn:hover {
+      background: var(--accent-primary);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* ========================================
+       GRAND TOTAL SECTION
+       ======================================== */
+    .grand-total-section {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-primary);
+    }
+
+    .section-title svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--accent-primary);
+    }
+
+    .grand-total-table {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .grand-total-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .grand-total-table th,
+    .grand-total-table td {
+      padding: 20px;
+      text-align: center;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .grand-total-table th:last-child,
+    .grand-total-table td:last-child {
+      border-right: none;
+    }
+
+    .grand-total-table th {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .grand-total-table td {
+      font-family: var(--font-numeric);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    }
+
+    /* ========================================
+       DETAILS TABLE SECTION
+       ======================================== */
+    .details-table-section {
+      margin-bottom: 32px;
+    }
+
+    .details-table-container {
+      max-height: 500px;
+      overflow-y: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .details-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .details-table thead th {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: left;
+      padding: 14px 16px;
+      border-bottom: 2px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      white-space: nowrap;
+    }
+
+    .details-table tbody tr {
+      transition: background-color 0.2s ease;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .details-table tbody tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .details-table tbody td {
+      padding: 12px 16px;
+      color: var(--text-secondary);
+    }
+
+    .details-table tbody td:nth-child(-n+5) {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-numeric);
+    }
+
+    /* ========================================
+       CHARTS SECTION
+       ======================================== */
+    .charts-section {
+      margin-bottom: 32px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .chart-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+
+    .chart-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    /* ========================================
+       TABLE SECTION
+       ======================================== */
+    .table-section {
+      padding: 0;
+    }
+
+    .table-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .table-header svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--accent-primary);
+    }
+
+    .table-badge {
+      padding: 6px 14px;
+      background: var(--accent-muted);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-md);
+      color: var(--accent-primary);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-numeric);
+    }
+
+    .table-filters {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .column-filter {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font-arabic);
+      transition: all 0.2s ease;
+    }
+
+    .column-filter::placeholder {
+      color: var(--text-muted);
+    }
+
+    .column-filter:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+
+    .table-container {
+      max-height: 600px;
+      overflow-y: auto;
+      overflow-x: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .data-table thead th {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: left;
+      padding: 14px 16px;
+      border-bottom: 2px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      white-space: nowrap;
+    }
+
+    .data-table tbody tr {
+      transition: background-color 0.2s ease;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .data-table tbody td {
+      padding: 12px 16px;
+      color: var(--text-secondary);
+    }
+
+    .data-table tbody td:first-child {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: var(--font-numeric);
+    }
+
+    .ga-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .ga-badge.ga-soh {
+      background: var(--success-muted);
+      color: var(--success);
+    }
+
+    .ga-badge.ga-1 {
+      background: var(--accent-muted);
+      color: var(--accent-primary);
+    }
+
+    .ga-badge.ga-0 {
+      background: var(--error-muted);
+      color: var(--error);
+    }
+
+    .no-data-cell {
+      text-align: center;
+      padding: 40px !important;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* ========================================
+       RESPONSIVE DESIGN
+       ======================================== */
+    @media (max-width: 1400px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-filters {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      main {
+        padding: 20px;
+      }
+
+      header {
+        padding: 16px 20px;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .header-actions {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .filters-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-group {
+        min-width: 100%;
+      }
+
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-filters {
+        grid-template-columns: 1fr;
+      }
+
+      .table-container {
+        max-height: 400px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .logo-text h1 {
+        font-size: 18px;
+      }
+
+      .logo-text p {
+        font-size: 11px;
+      }
+
+      .header-actions {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .last-updated,
+      .report-date {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loader"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-section">
+      <div class="logo-icon">📱</div>
+      <div class="logo-text">
+        <h1>GA Dashboard</h1>
+        <p>SIM & Wallet Management</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="last-updated">
+        <span class="dot"></span>
+        <span>Last updated: <span id="lastUpdated">--</span></span>
+      </div>
+      <div class="report-date">
+        <span>📅 Report Date: <span id="reportDate">--</span></span>
+      </div>
+      <button class="refresh-btn" id="refreshBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+        Refresh
+      </button>
+      <button class="pause-btn" id="pauseBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+        </svg>
+        <span id="pauseText">Pause</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Filters Row -->
+    <div class="filters-row">
+      <div class="filter-group">
+        <label for="filterPOS">POS Search</label>
+        <input type="text" id="filterPOS" class="filter-input" placeholder="Search POS...">
+      </div>
+      <div class="filter-group">
+        <label for="filterManager">Manager</label>
+        <select id="filterManager" class="filter-select">
+          <option value="">All Managers</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterSupervisor">Supervisor</label>
+        <select id="filterSupervisor" class="filter-select">
+          <option value="">All Supervisors</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterRegion">Region</label>
+        <select id="filterRegion" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterCity">City</label>
+        <select id="filterCity" class="filter-select">
+          <option value="">All Cities</option>
+        </select>
+      </div>
+      <button class="clear-filters-btn" id="clearFiltersBtn">Clear All</button>
+    </div>
+
+    <!-- Grand Total Section -->
+    <section class="grand-total-section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+        </svg>
+        Grand Totals
+      </h2>
+      <div class="grand-total-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Grand Total Wallet</th>
+              <th>Grand Total SIM</th>
+              <th>Grand Total GA-1</th>
+              <th>Grand Total GA-0</th>
+              <th>Grand Total SOH SIM</th>
+            </tr>
+          </thead>
+          <tbody id="grandTotalBody">
+            <tr>
+              <td>--</td>
+              <td>--</td>
+              <td>--</td>
+              <td>--</td>
+              <td>--</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Supervisor Charts Section -->
+    <section class="charts-section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+        </svg>
+        Analytics by Supervisor
+      </h2>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3 class="chart-title">Total Wallet by Supervisor</h3>
+          <div class="chart-container">
+            <canvas id="supervisorWalletChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Total SIM by Supervisor</h3>
+          <div class="chart-container">
+            <canvas id="supervisorSimChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Total GA-1 by Supervisor</h3>
+          <div class="chart-container">
+            <canvas id="supervisorGa1Chart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Total GA-0 by Supervisor</h3>
+          <div class="chart-container">
+            <canvas id="supervisorGa0Chart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Total SOH SIM by Supervisor</h3>
+          <div class="chart-container">
+            <canvas id="supervisorSohChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Manager Charts Section -->
+    <section class="charts-section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+        </svg>
+        Analytics by Manager
+      </h2>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3 class="chart-title">Total Wallet by Manager</h3>
+          <div class="chart-container">
+            <canvas id="managerWalletChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Total SIM by Manager</h3>
+          <div class="chart-container">
+            <canvas id="managerSimChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Total GA-1 by Manager</h3>
+          <div class="chart-container">
+            <canvas id="managerGa1Chart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Total GA-0 by Manager</h3>
+          <div class="chart-container">
+            <canvas id="managerGa0Chart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Total SOH SIM by Manager</h3>
+          <div class="chart-container">
+            <canvas id="managerSohChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Details Table Section -->
+    <section class="details-table-section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 3h18v2H3V3zm0 4h18v2H3V7zm0 4h18v2H3v-2zm0 4h18v2H3v-2zm0 4h18v2H3v-2z"/>
+        </svg>
+        Details by Manager
+      </h2>
+      <div class="details-table-container">
+        <table class="details-table">
+          <thead>
+            <tr>
+              <th>Total Wallet</th>
+              <th>Total SIM</th>
+              <th>Total GA-1</th>
+              <th>Total GA-0</th>
+              <th>SOH SIM</th>
+              <th>Manager</th>
+              <th>Supervisor</th>
+              <th>Region</th>
+              <th>City</th>
+            </tr>
+          </thead>
+          <tbody id="detailsTableBody">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Table Section -->
+    <section class="table-section">
+      <div class="table-card">
+        <div class="table-header">
+          <h2>
+            <svg viewBox="0 0 24 24">
+              <path d="M3 3h18v2H3V3zm0 4h18v2H3V7zm0 4h18v2H3v-2zm0 4h18v2H3v-2zm0 4h18v2H3v-2z"/>
+            </svg>
+            Serialization Details
+          </h2>
+          <span class="table-badge" id="tableCount">0 Records</span>
+        </div>
+
+        <!-- Column Filters -->
+        <div class="table-filters">
+          <input type="text" class="column-filter" data-column="POS" placeholder="Filter POS...">
+          <input type="text" class="column-filter" data-column="Serial_Number" placeholder="Filter Serial...">
+          <input type="text" class="column-filter" data-column="GA" placeholder="Filter GA...">
+          <input type="text" class="column-filter" data-column="Manager" placeholder="Filter Manager...">
+          <input type="text" class="column-filter" data-column="Supervisor" placeholder="Filter Supervisor...">
+          <input type="text" class="column-filter" data-column="Region" placeholder="Filter Region...">
+          <input type="text" class="column-filter" data-column="City" placeholder="Filter City...">
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container">
+          <table class="data-table" id="serializationTable">
+            <thead>
+              <tr>
+                <th>POS</th>
+                <th>Serial Number</th>
+                <th>GA</th>
+                <th>Manager</th>
+                <th>Supervisor</th>
+                <th>Region</th>
+                <th>City</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- JavaScript -->
+  <script>
+    // ========================================
+    // CONFIGURATION
+    // ========================================
+    const CONFIG = {
+      REFRESH_INTERVAL: 18 * 60 * 60 * 1000, // 18 hours
+      COMBINED_TABLE_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/GACombinedTable',
+      SERIALIZATION_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/GASerialization',
+      MAX_TABLE_ROWS: 500,
+      DISPLAY_ROWS: 20,
+    };
+
+    // ========================================
+    // STATE
+    // ========================================
+    const state = {
+      // Raw data from webhooks
+      rawCombinedData: [],
+      rawSerializationData: [],
+
+      // Filtered data (after top-level filters applied)
+      filteredCombinedData: [],
+      filteredSerializationData: [],
+
+      // Table data (after column filters applied)
+      tableDisplayData: [],
+
+      // Active filters
+      filters: {
+        pos: '',
+        manager: '',
+        supervisor: '',
+        region: '',
+        city: ''
+      },
+
+      // Column filters for table
+      columnFilters: {
+        POS: '',
+        Serial_Number: '',
+        GA: '',
+        Manager: '',
+        Supervisor: '',
+        Region: '',
+        City: ''
+      },
+
+      // Auto-refresh state
+      autoRefresh: {
+        enabled: true,
+        intervalId: null
+      },
+
+      // Charts
+      charts: {
+        supervisor: {
+          wallet: null,
+          sim: null,
+          ga1: null,
+          ga0: null,
+          soh: null
+        },
+        manager: {
+          wallet: null,
+          sim: null,
+          ga1: null,
+          ga0: null,
+          soh: null
+        }
+      }
+    };
+
+    // ========================================
+    // DATA FUNCTIONS
+    // ========================================
+    async function fetchCombinedData() {
+      try {
+        const timestamp = new Date().getTime();
+        const url = `${CONFIG.COMBINED_TABLE_URL}?_t=${timestamp}`;
+
+        const response = await fetch(url, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        state.rawCombinedData = Array.isArray(data) ? data : [];
+        console.log('Fetched combined data:', state.rawCombinedData.length, 'records');
+
+        return state.rawCombinedData;
+      } catch (error) {
+        console.error('Error fetching combined data:', error);
+        return [];
+      }
+    }
+
+    async function fetchSerializationData() {
+      try {
+        const timestamp = new Date().getTime();
+        const url = `${CONFIG.SERIALIZATION_URL}?_t=${timestamp}`;
+
+        const response = await fetch(url, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        state.rawSerializationData = Array.isArray(data) ? data : [];
+        console.log('Fetched serialization data:', state.rawSerializationData.length, 'records');
+
+        return state.rawSerializationData;
+      } catch (error) {
+        console.error('Error fetching serialization data:', error);
+        return [];
+      }
+    }
+
+    async function loadAllData() {
+      showLoading();
+      await Promise.all([
+        fetchCombinedData(),
+        fetchSerializationData()
+      ]);
+      hideLoading();
+      updateLastRefreshTime();
+      updateReportDate();
+    }
+
+    // ========================================
+    // FILTER FUNCTIONS
+    // ========================================
+    function populateFilterDropdowns() {
+      const managerOptions = [...new Set(state.rawCombinedData.map(d => d.Manager))].filter(Boolean).sort();
+      const supervisorOptions = [...new Set(state.rawCombinedData.map(d => d.Supervisor))].filter(Boolean).sort();
+      const regionOptions = [...new Set(state.rawCombinedData.map(d => d.Region))].filter(Boolean).sort();
+      const cityOptions = [...new Set(state.rawCombinedData.map(d => d.City))].filter(Boolean).sort();
+
+      populateSelect('filterManager', managerOptions, 'All Managers');
+      populateSelect('filterSupervisor', supervisorOptions, 'All Supervisors');
+      populateSelect('filterRegion', regionOptions, 'All Regions');
+      populateSelect('filterCity', cityOptions, 'All Cities');
+    }
+
+    function populateSelect(id, options, defaultLabel) {
+      const select = document.getElementById(id);
+      const currentValue = select.value;
+
+      select.innerHTML = `<option value="">${defaultLabel}</option>`;
+
+      options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        select.appendChild(option);
+      });
+
+      // Restore previous selection if still valid
+      if (currentValue && options.includes(currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    function applyTopLevelFilters() {
+      // Read filter values
+      state.filters.pos = document.getElementById('filterPOS').value.toLowerCase().trim();
+      state.filters.manager = document.getElementById('filterManager').value;
+      state.filters.supervisor = document.getElementById('filterSupervisor').value;
+      state.filters.region = document.getElementById('filterRegion').value;
+      state.filters.city = document.getElementById('filterCity').value;
+
+      // Filter combined data
+      state.filteredCombinedData = state.rawCombinedData.filter(row => {
+        if (state.filters.pos && !String(row.POS).toLowerCase().includes(state.filters.pos)) return false;
+        if (state.filters.manager && row.Manager !== state.filters.manager) return false;
+        if (state.filters.supervisor && row.Supervisor !== state.filters.supervisor) return false;
+        if (state.filters.region && row.Region !== state.filters.region) return false;
+        if (state.filters.city && row.City !== state.filters.city) return false;
+        return true;
+      });
+
+      // Filter serialization data
+      state.filteredSerializationData = state.rawSerializationData.filter(row => {
+        if (state.filters.pos && !String(row.POS).toLowerCase().includes(state.filters.pos)) return false;
+        if (state.filters.manager && row.Manager !== state.filters.manager) return false;
+        if (state.filters.supervisor && row.Supervisor !== state.filters.supervisor) return false;
+        if (state.filters.region && row.Region !== state.filters.region) return false;
+        if (state.filters.city && row.City !== state.filters.city) return false;
+        return true;
+      });
+
+      // Update all displays
+      renderGrandTotals();
+      renderDetailsTable();
+      renderCharts();
+      applyColumnFilters(); // This will render the serialization table
+    }
+
+    function applyColumnFilters() {
+      // Read column filter values
+      Object.keys(state.columnFilters).forEach(col => {
+        const input = document.querySelector(`.column-filter[data-column="${col}"]`);
+        state.columnFilters[col] = input ? input.value.toLowerCase().trim() : '';
+      });
+
+      // Filter serialization data by column filters
+      state.tableDisplayData = state.filteredSerializationData.filter(row => {
+        for (const [col, filterValue] of Object.entries(state.columnFilters)) {
+          if (filterValue && row[col]) {
+            const cellValue = String(row[col]).toLowerCase();
+            if (!cellValue.includes(filterValue)) return false;
+          }
+        }
+        return true;
+      });
+
+      renderTable();
+    }
+
+    function clearAllFilters() {
+      document.getElementById('filterPOS').value = '';
+      document.getElementById('filterManager').value = '';
+      document.getElementById('filterSupervisor').value = '';
+      document.getElementById('filterRegion').value = '';
+      document.getElementById('filterCity').value = '';
+
+      // Clear column filters
+      document.querySelectorAll('.column-filter').forEach(input => {
+        input.value = '';
+      });
+
+      state.filters = { pos: '', manager: '', supervisor: '', region: '', city: '' };
+      state.columnFilters = {
+        POS: '', Serial_Number: '', GA: '', Manager: '',
+        Supervisor: '', Region: '', City: ''
+      };
+
+      applyTopLevelFilters();
+    }
+
+    // ========================================
+    // GRAND TOTALS RENDERING
+    // ========================================
+    function renderGrandTotals() {
+      const tbody = document.getElementById('grandTotalBody');
+
+      let grandTotalWallet = 0;
+      let grandTotalSIM = 0;
+      let grandTotalGA1 = 0;
+      let grandTotalGA0 = 0;
+      let grandTotalSOH = 0;
+
+      state.filteredCombinedData.forEach(row => {
+        grandTotalWallet += parseFloat(row.Total_Wallet) || 0;
+        grandTotalSIM += parseInt(row.Total_SIM) || 0;
+        grandTotalGA1 += parseInt(row.Total_GA_1) || 0;
+        grandTotalGA0 += parseInt(row.Total_GA_0) || 0;
+        grandTotalSOH += parseInt(row.SIM_SOH) || 0;
+      });
+
+      tbody.innerHTML = `
+        <tr>
+          <td>${formatNumber(grandTotalWallet)}</td>
+          <td>${formatNumber(grandTotalSIM)}</td>
+          <td>${formatNumber(grandTotalGA1)}</td>
+          <td>${formatNumber(grandTotalGA0)}</td>
+          <td>${formatNumber(grandTotalSOH)}</td>
+        </tr>
+      `;
+    }
+
+    // ========================================
+    // DETAILS TABLE RENDERING
+    // ========================================
+    function renderDetailsTable() {
+      const tbody = document.getElementById('detailsTableBody');
+
+      // Aggregate by combination of Manager, Supervisor, Region, City
+      const detailsMap = {};
+
+      state.filteredCombinedData.forEach(row => {
+        const key = `${row.Manager}|${row.Supervisor}|${row.Region}|${row.City}`;
+
+        if (!detailsMap[key]) {
+          detailsMap[key] = {
+            manager: row.Manager || 'Unknown',
+            supervisor: row.Supervisor || 'Unknown',
+            region: row.Region || 'Unknown',
+            city: row.City || 'Unknown',
+            totalWallet: 0,
+            totalSIM: 0,
+            totalGA1: 0,
+            totalGA0: 0,
+            sohSIM: 0
+          };
+        }
+
+        detailsMap[key].totalWallet += parseFloat(row.Total_Wallet) || 0;
+        detailsMap[key].totalSIM += parseInt(row.Total_SIM) || 0;
+        detailsMap[key].totalGA1 += parseInt(row.Total_GA_1) || 0;
+        detailsMap[key].totalGA0 += parseInt(row.Total_GA_0) || 0;
+        detailsMap[key].sohSIM += parseInt(row.SIM_SOH) || 0;
+      });
+
+      // Convert to array and sort by total wallet
+      const detailsArray = Object.values(detailsMap).sort((a, b) => b.totalWallet - a.totalWallet);
+
+      tbody.innerHTML = detailsArray.map(detail => `
+        <tr>
+          <td>${formatNumber(detail.totalWallet)}</td>
+          <td>${formatNumber(detail.totalSIM)}</td>
+          <td>${formatNumber(detail.totalGA1)}</td>
+          <td>${formatNumber(detail.totalGA0)}</td>
+          <td>${formatNumber(detail.sohSIM)}</td>
+          <td>${escapeHtml(detail.manager)}</td>
+          <td>${escapeHtml(detail.supervisor)}</td>
+          <td>${escapeHtml(detail.region)}</td>
+          <td>${escapeHtml(detail.city)}</td>
+        </tr>
+      `).join('');
+
+      if (detailsArray.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="no-data-cell">No data available</td>
+          </tr>
+        `;
+      }
+    }
+
+    // ========================================
+    // CHARTS RENDERING
+    // ========================================
+    function renderCharts() {
+      // Aggregate by supervisor
+      const supervisorData = {};
+      state.filteredCombinedData.forEach(row => {
+        const supervisor = row.Supervisor || 'Unknown';
+        if (!supervisorData[supervisor]) {
+          supervisorData[supervisor] = {
+            totalWallet: 0,
+            totalSIM: 0,
+            totalGA1: 0,
+            totalGA0: 0,
+            sohSIM: 0
+          };
+        }
+        supervisorData[supervisor].totalWallet += parseFloat(row.Total_Wallet) || 0;
+        supervisorData[supervisor].totalSIM += parseInt(row.Total_SIM) || 0;
+        supervisorData[supervisor].totalGA1 += parseInt(row.Total_GA_1) || 0;
+        supervisorData[supervisor].totalGA0 += parseInt(row.Total_GA_0) || 0;
+        supervisorData[supervisor].sohSIM += parseInt(row.SIM_SOH) || 0;
+      });
+
+      // Aggregate by manager
+      const managerData = {};
+      state.filteredCombinedData.forEach(row => {
+        const manager = row.Manager || 'Unknown';
+        if (!managerData[manager]) {
+          managerData[manager] = {
+            totalWallet: 0,
+            totalSIM: 0,
+            totalGA1: 0,
+            totalGA0: 0,
+            sohSIM: 0
+          };
+        }
+        managerData[manager].totalWallet += parseFloat(row.Total_Wallet) || 0;
+        managerData[manager].totalSIM += parseInt(row.Total_SIM) || 0;
+        managerData[manager].totalGA1 += parseInt(row.Total_GA_1) || 0;
+        managerData[manager].totalGA0 += parseInt(row.Total_GA_0) || 0;
+        managerData[manager].sohSIM += parseInt(row.SIM_SOH) || 0;
+      });
+
+      // Sort and take top 10
+      const sortedSupervisors = Object.entries(supervisorData)
+        .sort((a, b) => b[1].totalWallet - a[1].totalWallet)
+        .slice(0, 10);
+      const sortedManagers = Object.entries(managerData)
+        .sort((a, b) => b[1].totalWallet - a[1].totalWallet)
+        .slice(0, 10);
+
+      // Destroy existing charts
+      if (state.charts.supervisor.wallet) state.charts.supervisor.wallet.destroy();
+      if (state.charts.supervisor.sim) state.charts.supervisor.sim.destroy();
+      if (state.charts.supervisor.ga1) state.charts.supervisor.ga1.destroy();
+      if (state.charts.supervisor.ga0) state.charts.supervisor.ga0.destroy();
+      if (state.charts.supervisor.soh) state.charts.supervisor.soh.destroy();
+      if (state.charts.manager.wallet) state.charts.manager.wallet.destroy();
+      if (state.charts.manager.sim) state.charts.manager.sim.destroy();
+      if (state.charts.manager.ga1) state.charts.manager.ga1.destroy();
+      if (state.charts.manager.ga0) state.charts.manager.ga0.destroy();
+      if (state.charts.manager.soh) state.charts.manager.soh.destroy();
+
+      // Chart configuration with data labels
+      const getChartOptions = () => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: '#111827',
+            font: {
+              weight: 'bold',
+              size: 11
+            },
+            formatter: (value) => formatNumber(value)
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: '#4b5563',
+              maxRotation: 45,
+              minRotation: 45
+            },
+            grid: {
+              color: '#e5e7eb'
+            }
+          },
+          y: {
+            ticks: {
+              color: '#4b5563'
+            },
+            grid: {
+              color: '#e5e7eb'
+            }
+          }
+        }
+      });
+
+      // Supervisor Charts
+      const supervisors = sortedSupervisors.map(([name]) => name);
+      const supervisorWalletData = sortedSupervisors.map(([, data]) => data.totalWallet);
+      const supervisorSimData = sortedSupervisors.map(([, data]) => data.totalSIM);
+      const supervisorGa1Data = sortedSupervisors.map(([, data]) => data.totalGA1);
+      const supervisorGa0Data = sortedSupervisors.map(([, data]) => data.totalGA0);
+      const supervisorSohData = sortedSupervisors.map(([, data]) => data.sohSIM);
+
+      state.charts.supervisor.wallet = new Chart(document.getElementById('supervisorWalletChart'), {
+        type: 'bar',
+        data: {
+          labels: supervisors,
+          datasets: [{
+            label: 'Total Wallet',
+            data: supervisorWalletData,
+            backgroundColor: 'rgba(168, 85, 247, 0.6)',
+            borderColor: '#a855f7',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      state.charts.supervisor.sim = new Chart(document.getElementById('supervisorSimChart'), {
+        type: 'bar',
+        data: {
+          labels: supervisors,
+          datasets: [{
+            label: 'Total SIM',
+            data: supervisorSimData,
+            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+            borderColor: '#10b981',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      state.charts.supervisor.ga1 = new Chart(document.getElementById('supervisorGa1Chart'), {
+        type: 'bar',
+        data: {
+          labels: supervisors,
+          datasets: [{
+            label: 'Total GA-1',
+            data: supervisorGa1Data,
+            backgroundColor: 'rgba(192, 132, 252, 0.6)',
+            borderColor: '#c084fc',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      state.charts.supervisor.ga0 = new Chart(document.getElementById('supervisorGa0Chart'), {
+        type: 'bar',
+        data: {
+          labels: supervisors,
+          datasets: [{
+            label: 'Total GA-0',
+            data: supervisorGa0Data,
+            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+            borderColor: '#ef4444',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      state.charts.supervisor.soh = new Chart(document.getElementById('supervisorSohChart'), {
+        type: 'bar',
+        data: {
+          labels: supervisors,
+          datasets: [{
+            label: 'Total SOH SIM',
+            data: supervisorSohData,
+            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+            borderColor: '#3b82f6',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      // Manager Charts
+      const managers = sortedManagers.map(([name]) => name);
+      const managerWalletData = sortedManagers.map(([, data]) => data.totalWallet);
+      const managerSimData = sortedManagers.map(([, data]) => data.totalSIM);
+      const managerGa1Data = sortedManagers.map(([, data]) => data.totalGA1);
+      const managerGa0Data = sortedManagers.map(([, data]) => data.totalGA0);
+      const managerSohData = sortedManagers.map(([, data]) => data.sohSIM);
+
+      state.charts.manager.wallet = new Chart(document.getElementById('managerWalletChart'), {
+        type: 'bar',
+        data: {
+          labels: managers,
+          datasets: [{
+            label: 'Total Wallet',
+            data: managerWalletData,
+            backgroundColor: 'rgba(168, 85, 247, 0.6)',
+            borderColor: '#a855f7',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      state.charts.manager.sim = new Chart(document.getElementById('managerSimChart'), {
+        type: 'bar',
+        data: {
+          labels: managers,
+          datasets: [{
+            label: 'Total SIM',
+            data: managerSimData,
+            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+            borderColor: '#10b981',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      state.charts.manager.ga1 = new Chart(document.getElementById('managerGa1Chart'), {
+        type: 'bar',
+        data: {
+          labels: managers,
+          datasets: [{
+            label: 'Total GA-1',
+            data: managerGa1Data,
+            backgroundColor: 'rgba(192, 132, 252, 0.6)',
+            borderColor: '#c084fc',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      state.charts.manager.ga0 = new Chart(document.getElementById('managerGa0Chart'), {
+        type: 'bar',
+        data: {
+          labels: managers,
+          datasets: [{
+            label: 'Total GA-0',
+            data: managerGa0Data,
+            backgroundColor: 'rgba(239, 68, 68, 0.6)',
+            borderColor: '#ef4444',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+
+      state.charts.manager.soh = new Chart(document.getElementById('managerSohChart'), {
+        type: 'bar',
+        data: {
+          labels: managers,
+          datasets: [{
+            label: 'Total SOH SIM',
+            data: managerSohData,
+            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+            borderColor: '#3b82f6',
+            borderWidth: 1
+          }]
+        },
+        options: getChartOptions(),
+        plugins: [ChartDataLabels]
+      });
+    }
+
+    // ========================================
+    // TABLE RENDERING
+    // ========================================
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const totalRows = Math.min(state.tableDisplayData.length, CONFIG.MAX_TABLE_ROWS);
+      const displayData = state.tableDisplayData.slice(0, CONFIG.DISPLAY_ROWS);
+
+      // Update count badge
+      document.getElementById('tableCount').textContent =
+        `Showing ${displayData.length} of ${totalRows} Records`;
+
+      // Render rows
+      tbody.innerHTML = displayData.map(row => `
+        <tr>
+          <td>${escapeHtml(row.POS || '')}</td>
+          <td>${escapeHtml(row.Serial_Number || '')}</td>
+          <td>
+            <span class="ga-badge ga-${(row.GA || '').toLowerCase()}">
+              ${escapeHtml(row.GA || '')}
+            </span>
+          </td>
+          <td>${escapeHtml(row.Manager || '')}</td>
+          <td>${escapeHtml(row.Supervisor || '')}</td>
+          <td>${escapeHtml(row.Region || '')}</td>
+          <td>${escapeHtml(row.City || '')}</td>
+        </tr>
+      `).join('');
+
+      // Show message if no data
+      if (displayData.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="no-data-cell">No records match the current filters</td>
+          </tr>
+        `;
+      }
+    }
+
+    // ========================================
+    // AUTO-REFRESH
+    // ========================================
+    function startAutoRefresh() {
+      if (state.autoRefresh.intervalId) {
+        clearInterval(state.autoRefresh.intervalId);
+      }
+
+      state.autoRefresh.intervalId = setInterval(async () => {
+        if (state.autoRefresh.enabled) {
+          console.log('Auto-refreshing data...');
+          await refreshData();
+        }
+      }, CONFIG.REFRESH_INTERVAL);
+    }
+
+    function toggleAutoRefresh() {
+      state.autoRefresh.enabled = !state.autoRefresh.enabled;
+
+      const pauseBtn = document.getElementById('pauseBtn');
+      const pauseText = document.getElementById('pauseText');
+
+      if (state.autoRefresh.enabled) {
+        pauseBtn.classList.remove('paused');
+        pauseText.textContent = 'Pause';
+      } else {
+        pauseBtn.classList.add('paused');
+        pauseText.textContent = 'Resume';
+      }
+
+      console.log('Auto-refresh:', state.autoRefresh.enabled ? 'enabled' : 'disabled');
+    }
+
+    async function refreshData() {
+      const btn = document.getElementById('refreshBtn');
+      btn.classList.add('loading');
+
+      await loadAllData();
+      populateFilterDropdowns();
+      applyTopLevelFilters();
+
+      setTimeout(() => {
+        btn.classList.remove('loading');
+      }, 500);
+    }
+
+    // ========================================
+    // UTILITIES
+    // ========================================
+    function formatNumber(num) {
+      if (!num && num !== 0) return '0';
+      return new Intl.NumberFormat('en-US').format(num);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function updateLastRefreshTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      document.getElementById('lastUpdated').textContent = timeStr;
+    }
+
+    function updateReportDate() {
+      // Get the createdAt date from the first record in combined data
+      if (state.rawCombinedData.length > 0) {
+        const createdAt = state.rawCombinedData[0].createdAt;
+        if (createdAt) {
+          const date = new Date(createdAt);
+          const dateStr = date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+          document.getElementById('reportDate').textContent = dateStr;
+        }
+      }
+    }
+
+    function showLoading() {
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+      }, 300);
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      console.log('Initializing GA Dashboard...');
+
+      // Setup event listeners
+      document.getElementById('refreshBtn').addEventListener('click', refreshData);
+      document.getElementById('pauseBtn').addEventListener('click', toggleAutoRefresh);
+      document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
+
+      // Top-level filter listeners
+      document.getElementById('filterPOS').addEventListener('input', debounce(applyTopLevelFilters, 300));
+      document.getElementById('filterManager').addEventListener('change', applyTopLevelFilters);
+      document.getElementById('filterSupervisor').addEventListener('change', applyTopLevelFilters);
+      document.getElementById('filterRegion').addEventListener('change', applyTopLevelFilters);
+      document.getElementById('filterCity').addEventListener('change', applyTopLevelFilters);
+
+      // Column filter listeners (debounced)
+      document.querySelectorAll('.column-filter').forEach(input => {
+        input.addEventListener('input', debounce(applyColumnFilters, 300));
+      });
+
+      // Load initial data
+      await loadAllData();
+      populateFilterDropdowns();
+      applyTopLevelFilters();
+
+      // Start auto-refresh
+      startAutoRefresh();
+
+      console.log('Dashboard initialized successfully');
+    });
+  </script>
+</body>
+</html>
