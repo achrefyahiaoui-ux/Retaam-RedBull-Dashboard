@@ -459,6 +459,72 @@
     }
 
     /* ========================================
+       POS WITHOUT MANAGER TABLE
+       ======================================== */
+    .pos-table-section {
+      margin-bottom: 32px;
+    }
+
+    .pos-total {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      margin-bottom: 16px;
+      padding: 12px 20px;
+      background: var(--accent-muted);
+      border-radius: var(--radius-md);
+      display: inline-block;
+    }
+
+    .pos-table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .pos-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .pos-table thead th {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: left;
+      padding: 14px 16px;
+      border-bottom: 2px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      white-space: nowrap;
+    }
+
+    .pos-table tbody tr {
+      transition: background-color 0.2s ease;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .pos-table tbody tr:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .pos-table tbody td {
+      padding: 12px 16px;
+      color: var(--text-secondary);
+    }
+
+    .pos-table tbody .no-data-cell {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ========================================
        CHARTS SECTION
        ======================================== */
     .charts-section {
@@ -1179,6 +1245,27 @@
       </div>
     </section>
 
+    <!-- POS Without Manager Section -->
+    <section class="pos-table-section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+        POS Without Manager
+      </h2>
+      <div class="pos-total" id="posTotal">Total: 0 POS</div>
+      <div class="pos-table-container">
+        <table class="pos-table">
+          <thead id="posTableHead">
+            <!-- Header populated dynamically -->
+          </thead>
+          <tbody id="posTableBody">
+            <!-- Rows populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- Table Section -->
     <section class="table-section">
       <div class="table-card">
@@ -1236,8 +1323,10 @@
       COMBINED_TABLE_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/GACombinedTable',
       SERIALIZATION_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/GASerialization',
       LOGIN_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/LogIn',
+      POS_WITHOUT_MANAGER_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/POS',
       MAX_TABLE_ROWS: 500,
       DISPLAY_ROWS: 20,
+      POS_DISPLAY_ROWS: 5,
     };
 
     // ========================================
@@ -1247,6 +1336,7 @@
       // Raw data from webhooks
       rawCombinedData: [],
       rawSerializationData: [],
+      rawPOSData: [],
 
       // Filtered data (after top-level filters applied)
       filteredCombinedData: [],
@@ -1363,11 +1453,38 @@
       }
     }
 
+    async function fetchPOSData() {
+      try {
+        const timestamp = new Date().getTime();
+        const url = `${CONFIG.POS_WITHOUT_MANAGER_URL}?_t=${timestamp}`;
+
+        const response = await fetch(url, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        state.rawPOSData = Array.isArray(data) ? data : [];
+        console.log('Fetched POS data:', state.rawPOSData.length, 'records');
+
+        return state.rawPOSData;
+      } catch (error) {
+        console.error('Error fetching POS data:', error);
+        return [];
+      }
+    }
+
     async function loadAllData() {
       showLoading();
       await Promise.all([
         fetchCombinedData(),
-        fetchSerializationData()
+        fetchSerializationData(),
+        fetchPOSData()
       ]);
       hideLoading();
       updateLastRefreshTime();
@@ -2014,6 +2131,46 @@
     }
 
     // ========================================
+    // POS WITHOUT MANAGER TABLE RENDERING
+    // ========================================
+    function renderPOSTable() {
+      const thead = document.getElementById('posTableHead');
+      const tbody = document.getElementById('posTableBody');
+      const totalCount = state.rawPOSData.length;
+      const displayData = state.rawPOSData.slice(0, CONFIG.POS_DISPLAY_ROWS);
+
+      // Update total count
+      document.getElementById('posTotal').textContent = `Total: ${totalCount} POS`;
+
+      // Get column names dynamically from first row
+      const columns = state.rawPOSData.length > 0 ? Object.keys(state.rawPOSData[0]) : [];
+
+      // Render header
+      if (columns.length > 0) {
+        thead.innerHTML = `
+          <tr>
+            ${columns.map(col => `<th>${escapeHtml(col)}</th>`).join('')}
+          </tr>
+        `;
+      }
+
+      // Render rows
+      if (displayData.length > 0) {
+        tbody.innerHTML = displayData.map(row => `
+          <tr>
+            ${columns.map(col => `<td>${escapeHtml(String(row[col] || ''))}</td>`).join('')}
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="${columns.length || 1}" class="no-data-cell">No POS data available</td>
+          </tr>
+        `;
+      }
+    }
+
+    // ========================================
     // AUTO-REFRESH
     // ========================================
     function startAutoRefresh() {
@@ -2053,6 +2210,7 @@
       await loadAllData();
       populateFilterDropdowns();
       applyTopLevelFilters();
+      renderPOSTable();
 
       setTimeout(() => {
         btn.classList.remove('loading');
@@ -2212,6 +2370,9 @@
 
       // Apply filters
       applyTopLevelFilters();
+
+      // Render POS table
+      renderPOSTable();
 
       // Start auto-refresh
       startAutoRefresh();
