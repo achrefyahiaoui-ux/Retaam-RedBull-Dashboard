@@ -1482,7 +1482,24 @@
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-        state.rawPOSData = Array.isArray(data) ? data : [];
+
+        // Handle empty data cases
+        if (!Array.isArray(data)) {
+          state.rawPOSData = [];
+        } else if (data.length === 0) {
+          state.rawPOSData = [];
+        } else if (data.length === 1 && typeof data[0] === 'string' && data[0].includes('empty')) {
+          // Handle case where webhook returns ["This is an item, but it's empty."]
+          state.rawPOSData = [];
+          console.log('POS webhook returned empty message');
+        } else if (data.length > 0 && typeof data[0] !== 'object') {
+          // Handle case where data contains non-object items
+          state.rawPOSData = [];
+          console.log('POS webhook returned invalid data format');
+        } else {
+          state.rawPOSData = data;
+        }
+
         console.log('Fetched POS data:', state.rawPOSData.length, 'records');
 
         return state.rawPOSData;
