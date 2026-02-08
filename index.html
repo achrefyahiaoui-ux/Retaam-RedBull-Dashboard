@@ -524,6 +524,19 @@
       font-style: italic;
     }
 
+    .sharepoint-link {
+      color: var(--accent-primary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+    }
+
+    .sharepoint-link:hover {
+      color: var(--accent-dark);
+      border-bottom-color: var(--accent-primary);
+    }
+
     /* ========================================
        CHARTS SECTION
        ======================================== */
@@ -1251,7 +1264,7 @@
         <svg viewBox="0 0 24 24">
           <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
         </svg>
-        POS Without Manager
+        POS Without Manager: (<a href="https://retaam-my.sharepoint.com/:x:/p/sba_solutions/IQCwKjkvY5coQoLTtWxxdX2yAWoO_UsIq8rQIAQmFX_7s_M?e=3Ok3Em&nav=MTVfe0JENjI4NjZGLUY0QTUtNDlDMi05RDM4LTAyNDUzOUQ5MTIzNH0" target="_blank" rel="noopener noreferrer" class="sharepoint-link">Link to the POS Vs Manager database</a>)
       </h2>
       <div class="pos-total" id="posTotal">Total: 0 POS</div>
       <div class="pos-table-container">
