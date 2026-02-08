@@ -1496,6 +1496,10 @@
           // Handle case where data contains non-object items
           state.rawPOSData = [];
           console.log('POS webhook returned invalid data format');
+        } else if (data.length > 0 && typeof data[0] === 'object' && Object.keys(data[0]).length === 0) {
+          // Handle case where webhook returns [{}] - array with empty object
+          state.rawPOSData = [];
+          console.log('POS webhook returned empty object');
         } else {
           state.rawPOSData = data;
         }
