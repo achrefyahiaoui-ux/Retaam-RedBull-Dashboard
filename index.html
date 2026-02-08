@@ -717,12 +717,241 @@
         justify-content: center;
       }
     }
+
+    /* ========================================
+       LOGIN MODAL
+       ======================================== */
+    .login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      backdrop-filter: blur(10px);
+    }
+
+    .login-overlay.hidden {
+      display: none;
+    }
+
+    .login-container {
+      background: white;
+      padding: 48px 40px;
+      border-radius: var(--radius-xl);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      max-width: 420px;
+      width: 90%;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .login-header h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-header p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-input {
+      padding: 14px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-family: var(--font-numeric);
+      transition: all 0.2s ease;
+      background: var(--bg-tertiary);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      background: white;
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+
+    .login-btn {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark));
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .login-error {
+      padding: 12px 16px;
+      background: var(--error-muted);
+      border: 1px solid var(--error);
+      border-radius: var(--radius-sm);
+      color: var(--error);
+      font-size: 14px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .login-error.show {
+      display: flex;
+    }
+
+    .logout-btn {
+      padding: 10px 20px;
+      background: var(--error);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logout-btn:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--accent-muted);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-dark);
+    }
+
+    .user-badge-icon {
+      font-size: 20px;
+    }
   </style>
 </head>
 <body>
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loader"></div>
+  </div>
+
+  <!-- Login Overlay -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-container">
+      <div class="login-header">
+        <div class="login-icon">🔐</div>
+        <h2>GA Dashboard Login</h2>
+        <p>Enter your credentials to access the dashboard</p>
+      </div>
+      <form class="login-form" id="loginForm">
+        <div class="login-error" id="loginError">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span id="loginErrorMessage">Invalid username or password</span>
+        </div>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            class="form-input"
+            placeholder="Enter your username"
+            required
+            autocomplete="username"
+          >
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            class="form-input"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+          >
+        </div>
+        <button type="submit" class="login-btn" id="loginBtn">
+          Sign In
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- Header -->
@@ -735,6 +964,10 @@
       </div>
     </div>
     <div class="header-actions">
+      <div class="user-badge" id="userBadge">
+        <span class="user-badge-icon">👤</span>
+        <span id="currentUsername">User</span>
+      </div>
       <div class="last-updated">
         <span class="dot"></span>
         <span>Last updated: <span id="lastUpdated">--</span></span>
@@ -753,6 +986,14 @@
           <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
         </svg>
         <span id="pauseText">Pause</span>
+      </button>
+      <button class="logout-btn" id="logoutBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        Logout
       </button>
     </div>
   </header>
@@ -994,6 +1235,7 @@
       REFRESH_INTERVAL: 18 * 60 * 60 * 1000, // 18 hours
       COMBINED_TABLE_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/GACombinedTable',
       SERIALIZATION_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/GASerialization',
+      LOGIN_URL: 'https://n8n.srv987649.hstgr.cloud/webhook/LogIn',
       MAX_TABLE_ROWS: 500,
       DISPLAY_ROWS: 20,
     };
@@ -1037,6 +1279,14 @@
       autoRefresh: {
         enabled: true,
         intervalId: null
+      },
+
+      // User authentication
+      user: {
+        isAuthenticated: false,
+        username: '',
+        supervisorFilter: '',
+        isRestricted: false
       },
 
       // Charts
@@ -1122,6 +1372,123 @@
       hideLoading();
       updateLastRefreshTime();
       updateReportDate();
+    }
+
+    // ========================================
+    // AUTHENTICATION FUNCTIONS
+    // ========================================
+    async function fetchLoginData() {
+      try {
+        const timestamp = new Date().getTime();
+        const url = `${CONFIG.LOGIN_URL}?_t=${timestamp}`;
+
+        const response = await fetch(url, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching login data:', error);
+        return [];
+      }
+    }
+
+    async function authenticateUser(username, password) {
+      const loginData = await fetchLoginData();
+
+      const user = loginData.find(u =>
+        u.User === username && u.PW === password
+      );
+
+      if (user) {
+        // Store user info in state and localStorage
+        state.user.isAuthenticated = true;
+        state.user.username = user.User;
+        state.user.supervisorFilter = user.Filter;
+        state.user.isRestricted = user.Filter !== 'All Supervisors';
+
+        // Save to localStorage for session persistence
+        localStorage.setItem('gaUser', JSON.stringify({
+          username: user.User,
+          supervisorFilter: user.Filter,
+          isRestricted: user.Filter !== 'All Supervisors'
+        }));
+
+        return true;
+      }
+
+      return false;
+    }
+
+    function checkAuthSession() {
+      const savedUser = localStorage.getItem('gaUser');
+
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          state.user.isAuthenticated = true;
+          state.user.username = userData.username;
+          state.user.supervisorFilter = userData.supervisorFilter;
+          state.user.isRestricted = userData.isRestricted;
+          return true;
+        } catch (error) {
+          console.error('Error parsing saved user data:', error);
+          localStorage.removeItem('gaUser');
+        }
+      }
+
+      return false;
+    }
+
+    function logout() {
+      // Clear state
+      state.user.isAuthenticated = false;
+      state.user.username = '';
+      state.user.supervisorFilter = '';
+      state.user.isRestricted = false;
+
+      // Clear localStorage
+      localStorage.removeItem('gaUser');
+
+      // Show login overlay
+      document.getElementById('loginOverlay').classList.remove('hidden');
+
+      // Reset form
+      document.getElementById('loginForm').reset();
+      document.getElementById('loginError').classList.remove('show');
+    }
+
+    function applySupervisorRestriction() {
+      const supervisorSelect = document.getElementById('filterSupervisor');
+
+      if (state.user.isRestricted) {
+        // Set the filter to the restricted supervisor
+        state.filters.supervisor = state.user.supervisorFilter;
+        supervisorSelect.value = state.user.supervisorFilter;
+
+        // Disable the dropdown
+        supervisorSelect.disabled = true;
+        supervisorSelect.style.opacity = '0.6';
+        supervisorSelect.style.cursor = 'not-allowed';
+
+        console.log(`Supervisor filter restricted to: ${state.user.supervisorFilter}`);
+      } else {
+        // Enable dropdown for unrestricted users
+        supervisorSelect.disabled = false;
+        supervisorSelect.style.opacity = '1';
+        supervisorSelect.style.cursor = 'pointer';
+      }
+    }
+
+    function updateUserDisplay() {
+      document.getElementById('currentUsername').textContent = state.user.username;
     }
 
     // ========================================
@@ -1760,7 +2127,51 @@
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('Initializing GA Dashboard...');
 
-      // Setup event listeners
+      // Setup authentication event listeners
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+
+        // Disable button and show loading
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing In...';
+        loginError.classList.remove('show');
+
+        // Authenticate
+        const isAuthenticated = await authenticateUser(username, password);
+
+        if (isAuthenticated) {
+          console.log(`User ${username} authenticated successfully`);
+
+          // Hide login overlay
+          document.getElementById('loginOverlay').classList.add('hidden');
+
+          // Update user display
+          updateUserDisplay();
+
+          // Load dashboard data
+          await initializeDashboard();
+        } else {
+          // Show error
+          loginError.classList.add('show');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Sign In';
+          document.getElementById('password').value = '';
+          document.getElementById('password').focus();
+        }
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        if (confirm('Are you sure you want to logout?')) {
+          logout();
+        }
+      });
+
+      // Setup dashboard event listeners
       document.getElementById('refreshBtn').addEventListener('click', refreshData);
       document.getElementById('pauseBtn').addEventListener('click', toggleAutoRefresh);
       document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
@@ -1777,16 +2188,36 @@
         input.addEventListener('input', debounce(applyColumnFilters, 300));
       });
 
+      // Check for existing session
+      const hasSession = checkAuthSession();
+
+      if (hasSession) {
+        console.log(`Restoring session for user: ${state.user.username}`);
+        document.getElementById('loginOverlay').classList.add('hidden');
+        updateUserDisplay();
+        await initializeDashboard();
+      } else {
+        console.log('No active session, showing login');
+        // Login overlay is visible by default
+      }
+    });
+
+    async function initializeDashboard() {
       // Load initial data
       await loadAllData();
       populateFilterDropdowns();
+
+      // Apply supervisor restriction if user is restricted
+      applySupervisorRestriction();
+
+      // Apply filters
       applyTopLevelFilters();
 
       // Start auto-refresh
       startAutoRefresh();
 
       console.log('Dashboard initialized successfully');
-    });
+    }
   </script>
 </body>
 </html>
